@@ -1,10 +1,8 @@
 export {
-  applyTemplate,
   getChangelog,
   getChanges,
-  getLastTag,
 } from "./src/utils.ts";
-import { args, getChangelog, applyTemplate } from "./src/utils.ts";
+import { args, getChangelog } from "./src/utils.ts";
 
 if (args.h || args.help) {
   console.log(`
@@ -29,16 +27,18 @@ const repo: string = String(args._[0]);
 const start_tag = args._[1] ? String(args._[1]) : undefined;
 const end_tag = args._[2] ? String(args._[2]) : undefined;
 
-const template: string = (args.t ?? args.template)
-  ? await Deno.readTextFile(args.t ?? args.template)
-  : "";
+const template: string = (args.t ?? args.template);
 const output: string = args.o ?? args.output;
 const version: string = args.v ?? args.version;
 const branch: string = args.b ?? args.branch;
 const markdown: boolean = args.m ?? args.markdown;
 
 const raw = await getChangelog(repo, start_tag, end_tag, branch, markdown);
-const changelog = template ? applyTemplate(template, raw, version) : raw;
+const changelog = template
+  ? (await Deno.readTextFile(template))
+    .replaceAll("{{ CHANGELOG }}", raw)
+    .replaceAll("{{ VERSION }}", version ?? "UNRELEASED")
+  : raw;
 
 if (output) await Deno.writeTextFile(output, changelog);
 

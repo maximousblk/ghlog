@@ -99,19 +99,28 @@ function getPrMessage(message: string): {
   const squash = squash_commit.exec(message);
   if (merge) {
     const [, number, title] = merge;
-    return { title: title, number: number };
+    return { number: number, title: title };
   } else if (squash) {
     const [, title, number] = squash;
-    return { title: title, number: number };
+    return { number: number, title: title };
   }
 }
+
+/**
+ * Returns an array of pull requests between two tags
+ *
+ * @param repo Github repository
+ * @param from Start tag
+ * @param to End tag
+ * @param branch Default tag
+ */
 
 export async function getChanges(
   repo: string,
   from?: string,
   to?: string,
   branch?: string,
-): Promise<{ title: string; number: string }[]> {
+): Promise<{ number: string; title: string }[]> {
   const from_tag: string | undefined = from ?? await getLastTag(repo);
   const from_commit: string = from_tag
     ? await getCommitForTag(repo, from_tag)
@@ -138,6 +147,16 @@ export async function getChanges(
   });
 }
 
+/**
+ * Returns auto generated changelog using GFM or CommomMark markdown spec
+ *
+ * @param repo Name of the GitHub repository
+ * @param from Start tag
+ * @param to End tag
+ * @param branch Default branch
+ * @param markdown Use CommonMark spec instead of GFM
+ */
+
 export async function getChangelog(
   repo: string,
   from?: string,
@@ -157,14 +176,4 @@ export async function getChangelog(
     );
   }
   return lines.join("\n");
-}
-
-export function applyTemplate(
-  template: string,
-  changelog: string,
-  version?: string,
-): string {
-  return template
-    .replaceAll("{{ CHANGELOG }}", changelog)
-    .replaceAll("{{ VERSION }}", version ?? "UNRELEASED");
 }
