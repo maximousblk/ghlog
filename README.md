@@ -7,7 +7,7 @@ Generate release notes based on GitHub Pull Requests
 You can install prlog using the following command.
 
 ```sh
-deno install -A -n prlog https://deno.land/x/prlog/mod.ts
+deno install -A https://deno.land/x/prlog/prlog.ts
 ```
 
 ## Usage
@@ -19,22 +19,22 @@ prlog <owner/repo> [start_tag] [end_tag] [options]
 - `[start_tag]` - where to start counting changes. Defaults to last tag or first commit.
 - `[end_tag]` - where to stop counting changes. Defaults to the last commit.
 - `[options]`:
-  - template - location of the release notes template (default: undefined)
-  - output - location where to output generated release notes (default: undefined)
-  - version - version to use in release notes (default: "UNRELEASED")
-  - branch - name of the default branch of the repo (default: "master")
-  - markdown - use CommonMark spec instead of GitHub Flavoured Markdown
-  - auth - GitHub access token. Use this to avoid API rate limits and access private repositories
+  - `-t, --template` - location of the release notes template (default: undefined)
+  - `-o, --output` - location where to output generated release notes (default: undefined)
+  - `-v, --version` - version to use in release notes (default: "UNRELEASED")
+  - `-b, --branch` - name of the default branch of the repo (default: "master")
+  - `-m, --markdown` - use CommonMark spec instead of GitHub Flavoured Markdown
+  - `--auth` - GitHub access token. Use this to avoid API rate limits and access private repositories
 
 You can also use the `GITHUB_TOKEN` environment variable to use the GitHub access token.
 
 ### Templates
 
-prlog uses markdown files for templates. Just use appropriate tags where you need them. If you don't define a template, prlog will output only a markdown list of pull requests.
+prlog can use any plaintext file for templates. Just use appropriate tags where you need them. If you don't define a template, prlog cli will output only a markdown list of pull requests.
 
 Officially supported tags:
 
-- `{{ VERSION }}` - version of next release
+- `{{ VERSION }}` - release version
 - `{{ CHANGELOG }}` - list of merged pull requests
 
 Example :
@@ -64,27 +64,45 @@ prlog denoland/deno -v 1.3.3 -t template.md -o changelog.md
 
 ### Plugins
 
-In addition to using the CLI, you can build custom plugins and tags for prlog.
+In addition to using the CLI, you can build custom plugins for prlog.
+
+Official plugins:
+
+- [Version](plugins/Version.ts) - Set the release version. tag: `{{ VERSION }}`
+- [SetDate](plugins/SetDate.ts) - Set date of release in desired format. tag: `{{ DATE }}`
+- [CodeName](plugins/CodeName.ts) - Set a code name for the release. tag: `{{ CODENAME }}`
+
+View [plugins](plugins) for more info.
 
 Example:
 
 ```ts
-import { getChangelog } from "https://deno.land/x/prlog/mod.ts";
-import { version, date, contributors } from "./plugin.ts";
+// release.ts
+import prlog from "https://deno.land/x/prlog/mod.ts";
+import "https://deno.land/x/prlog/plugins/SetDate.ts";
+import "https://deno.land/x/prlog/plugins/Version.ts";
 
-const changelog: string = await getChangelog("denoland/deno");
-const template: string = await Deno.readTextFile("./template.md");
+const template: string = `
+# {{ VERSION }} / {{ DATE }}
 
-const release_notes: string = template
-  .replaceAll("{{ CHANGELOG }}", changelog)
-  .replaceAll("{{ VERSION }}", version)
-  .replaceAll("{{ DATE }}", date)
-  .replaceAll("{{ CONTRIBUTORS }}", contributors);
+{{ CHANGELOG }}
+`;
 
-await Deno.writeTextFile("CHANGELOG.md", release_notes);
+const changelog: string = (await prlog(template, "denoland/deno"))
+  .prlogSetDate()
+  .prlogVersion("1.3.3");
+
+console.log(changelog);
+
+/*
+$ deno run -A release.ts
+### 1.3.3 / 02 09 2020
+
+- docs(std/fs): remove stale references to readFileStr and writeFileStr (#7254)
+- Typo in zsh env setup steps (#7250)
+- upgrade: rust 1.46.0 (#7251)
+*/
 ```
-
-View [type documantation](https://doc.deno.land/https/deno.land/x/prlog/mod.ts) for more info.
 
 ## License
 

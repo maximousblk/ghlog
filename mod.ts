@@ -1,45 +1,206 @@
-export {
-  getChangelog,
-  getChanges,
-} from "./src/utils.ts";
-import { args, getChangelog } from "./src/utils.ts";
+import { parse, Args } from "./deps.ts";
 
-if (args.h || args.help) {
-  console.log(`
-prlog - Generate release notes based on GitHub Pull Requests
+const args: Args = parse(Deno.args);
 
-Usage:
-  prlog <owner/repo> [start_tag] [end_tag] [options]
+const GITHUB_TOKEN: string = args.auth || Deno.env.get("GITHUB_TOKEN");
 
-Options:
-  -h, --help        - this help menu
-  -t, --template    - location of template file
-  -o, --output      - location of changelog output
-  -v, --version     - next version
-  -b, --branch      - default branch
-  -m, --markdown    - use CommonMark spec instead of GFM
-      --auth        - GitHub access token
-`);
-  Deno.exit(0);
+const headers: object = GITHUB_TOKEN
+  ? {
+    headers: {
+      Authorization: `token ${GITHUB_TOKEN}`,
+    },
+  }
+  : {};
+
+const API: string = "https://api.github.com";
+const WEB: string = "https://github.com";
+
+const merge_commit: RegExp = /^Merge pull request #([0-9]+) from .*\n\n(.*)/;
+const squash_commit: RegExp = /^(.*) \(#([0-9]+)\).*/;
+
+async function getCommitForTag(
+  repo: string,
+  tag: string,
+): Promise<string> {
+  const tag_: { object: { sha: string } } = await fetch(
+    `${API}/repos/${repo}/git/refs/tags/${tag}`,
+    headers,
+  )
+    .then((response) => response.json());
+  return tag_.object.sha;
 }
 
-const repo: string = String(args._[0]);
-const start_tag = args._[1] ? String(args._[1]) : undefined;
-const end_tag = args._[2] ? String(args._[2]) : undefined;
+async function getInitialCommit(repo: string): Promise<string> {
+  const commits_api = await fetch(`${API}/repos/${repo}/commits`, headers);
+  const last_page =
+    commits_api.headers.get("link")?.split(",")[1].split(";")[0].split("<")[1]
+      .split(">")[0];
+  const commits: { sha: string }[] = await commits_api.json();
 
-const template: string = (args.t ?? args.template);
-const output: string = args.o ?? args.output;
-const version: string = args.v ?? args.version;
-const branch: string = args.b ?? args.branch;
-const markdown: boolean = args.m ?? args.markdown;
+  console.log(1, commits);
 
-const raw = await getChangelog(repo, start_tag, end_tag, branch, markdown);
-const changelog = template
-  ? (await Deno.readTextFile(template))
-    .replaceAll("{{ CHANGELOG }}", raw)
-    .replaceAll("{{ VERSION }}", version ?? "UNRELEASED")
-  : raw;
+  if (last_page) {
+    const first_commit: { sha: string }[] = await fetch(last_page, headers)
+      .then((response) => response.json());
+    return first_commit[first_commit.length - 1].sha;
+  } else {
+    return commits[commits.length - 1].sha;
+  }
+}
 
-if (output) await Deno.writeTextFile(output, changelog);
+async function getLastCommit(
+  repo: string,
+  branch?: string,
+): Promise<string> {
+  const commits: { sha: string } = await fetch(
+    `${API}/repos/${repo}/commits/${branch ?? "master"}`,
+    headers,
+  )
+    .then((response) => response.json());
+  return commits.sha;
+}
 
-console.log(changelog);
+async function getLastTag(repo: string): Promise<string | undefined> {
+  const tags: { name: string }[] = await fetch(
+    `${API}/repos/${repo}/tags`,
+    headers,
+  )
+    .then((response) => response.json());
+  return tags[0] ? tags[0].name : undefined;
+}
+
+async function getCommitsBetween(
+  repo: string,
+  from: string,
+  to: string,
+): Promise<{ sha: string; message: string }[]> {
+  const commits: {
+    commits: {
+      sha: string;
+      commit: {
+        message: string;
+      };
+    }[];
+  } = await fetch(
+    `${API}/repos/${repo}/compare/${from}...${to}`,
+    headers,
+  )
+    .then((response) => response.json());
+  let sha: { sha: string; message: string }[] = [];
+  for (let commit of commits.commits) {
+    sha.push({ sha: commit.sha, message: commit.commit.message });
+  }
+  return sha;
+}
+
+function getPrMessage(message: string): {
+  title: string;
+  number: string;
+} | undefined {
+  const merge = merge_commit.exec(message);
+  const squash = squash_commit.exec(message);
+  if (merge) {
+    const [, number, title] = merge;
+    return { number: number, title: title };
+  } else if (squash) {
+    const [, title, number] = squash;
+    return { number: number, title: title };
+  }
+}
+
+/**
+ * Returns an array of pull requests between two tags
+ *
+ * @param repo Github repository
+ * @param from Start version
+ * @param to End version
+ * @param branch Default tag
+ */
+
+export async function getChanges(
+  repo: string,
+  from?: string,
+  to?: string,
+  branch?: string,
+): Promise<{ number: string; title: string }[]> {
+  const from_tag: string | undefined = from ?? await getLastTag(repo);
+  const from_commit: string = from_tag
+    ? await getCommitForTag(repo, from_tag)
+    : await getInitialCommit(repo);
+  const to_commit: string = to
+    ? await getCommitForTag(repo, to)
+    : await getLastCommit(repo, branch);
+
+  const commits_between: { sha: string; message: string }[] =
+    await getCommitsBetween(repo, from_commit, to_commit);
+
+  let prs: { title: string; number: string }[] = [];
+
+  for (let commit of commits_between) {
+    const pr_message = getPrMessage(commit.message);
+    if (pr_message) {
+      prs.push(pr_message);
+    }
+  }
+  return prs.sort((a, b) => {
+    if (a.title.toLowerCase() < b.title.toLowerCase()) return -1;
+    if (a.title.toLowerCase() > b.title.toLowerCase()) return 1;
+    return 0;
+  });
+}
+
+/**
+ * Returns auto generated changelog using GFM or CommomMark markdown spec
+ *
+ * @param repo Name of the GitHub repository
+ * @param from Start tag
+ * @param to End tag
+ * @param branch Default branch
+ * @param markdown Use CommonMark spec instead of GFM
+ */
+
+async function getChangelog(
+  repo: string,
+  from?: string,
+  to?: string,
+  branch?: string,
+  markdown?: boolean,
+): Promise<string> {
+  const changes = await getChanges(repo, from, to, branch);
+  let lines: string[] = [];
+  for (const change of changes) {
+    lines.push(
+      `- ${change.title} ${
+        markdown && repo
+          ? `([#${change.number}](${WEB}/${repo}/pull/${change.number}))`
+          : `(#${change.number})`
+      }`,
+    );
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Returns auto generated changelog using GFM or CommomMark markdown spec with template applied
+ *
+ * @param template Release notes template
+ * @param repo Name of the GitHub repository
+ * @param from Start version
+ * @param to End version
+ * @param branch Default branch
+ * @param tag Override the default placeholder tag in template
+ * @param markdown Use CommonMark spec instead of GFM
+ */
+
+export default async function prlog(
+  template: string,
+  repo: string,
+  from?: string,
+  to?: string,
+  branch?: string,
+  tag?: string,
+  markdown?: boolean,
+): Promise<string> {
+  const changelog = await getChangelog(repo, from, to, branch, markdown);
+  return template.replaceAll(tag ?? "{{ CHANGELOG }}", changelog);
+}
