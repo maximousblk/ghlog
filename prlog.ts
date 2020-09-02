@@ -1,5 +1,5 @@
 import { parse, Args } from "./deps.ts";
-import prlog, { } from "./mod.ts";
+import prlog from "./mod.ts";
 import "./plugins/Version.ts";
 
 const args: Args = parse(Deno.args);
