@@ -73,7 +73,7 @@ Official plugins:
 - [SetDate](plugins/SetDate.ts) - Set date of release in desired format. tag: `{{ DATE }}`
 - [CodeName](plugins/CodeName.ts) - Set a code name for the release. tag: `{{ CODENAME }}`
 
-View [plugins](plugins) for more info.
+View [plugins](plugins) and [docs](https://doc.deno.land/https/deno.land/x/prlog/mod.ts) for more info.
 
 Example:
 

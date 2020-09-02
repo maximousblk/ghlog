@@ -11,4 +11,4 @@ String.prototype.prlogVersion = function (
   return this.replaceAll(tag ?? "{{ VERSION }}", version);
 };
 
-export { };
+export {};
