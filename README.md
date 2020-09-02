@@ -24,6 +24,7 @@ prlog <owner/repo> [start_tag] [end_tag] [options]
   - `-v, --version` - version to use in release notes (default: "UNRELEASED")
   - `-b, --branch` - name of the default branch of the repo (default: "master")
   - `-m, --markdown` - use CommonMark spec instead of GitHub Flavoured Markdown
+  - `-a, --append` - append the out to an existing changelog instead of owerwriting it
   - `--auth` - GitHub access token. Use this to avoid API rate limits and access private repositories
 
 You can also use the `GITHUB_TOKEN` environment variable to use the GitHub access token.
