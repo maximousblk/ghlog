@@ -2,7 +2,7 @@ import { parse, Args } from "./deps.ts";
 
 const args: Args = parse(Deno.args);
 
-const GITHUB_TOKEN: string = args.auth || Deno.env.get("GITHUB_TOKEN");
+const GITHUB_TOKEN: string = args.auth ?? Deno.env.get("GITHUB_TOKEN");
 
 const headers: object = GITHUB_TOKEN
   ? {
@@ -29,58 +29,66 @@ export interface PullRequest {
   }[];
 }
 
-async function getCommitForTag(
+export interface prlogOptions {
+  tag?: string;
+  markdown?: boolean;
+}
+
+export async function getCommitForTag(
   repo: string,
   tag: string,
 ): Promise<string> {
-  const tag_: { object: { sha: string } } = await fetch(
+  const ref: { object: { sha: string } } = await fetch(
     `${API}/repos/${repo}/git/refs/tags/${tag}`,
     headers,
-  )
-    .then((response) => response.json());
-  return tag_.object.sha;
+  ).then((res) => res.json());
+
+  return ref.object.sha;
 }
 
-async function getInitialCommit(repo: string): Promise<string> {
+export async function getInitialCommit(repo: string): Promise<string> {
   const commits_api = await fetch(`${API}/repos/${repo}/commits`, headers);
-  const last_page =
-    commits_api.headers.get("link")?.split(",")[1].split(";")[0].split("<")[1]
-      .split(">")[0];
+  const last_page = commits_api.headers
+    .get("link")
+    ?.split(",")[1]
+    .split(";")[0]
+    .split("<")[1]
+    .split(">")[0];
+
   const commits: { sha: string }[] = await commits_api.json();
 
-  console.log(1, commits);
-
   if (last_page) {
-    const first_commit: { sha: string }[] = await fetch(last_page, headers)
-      .then((response) => response.json());
-    return first_commit[first_commit.length - 1].sha;
+    const commit: { sha: string }[] = await fetch(last_page, headers)
+      .then((res) => res.json());
+
+    return commit[commit.length - 1].sha;
   } else {
     return commits[commits.length - 1].sha;
   }
 }
 
-async function getLastCommit(
+export async function getLastCommit(
   repo: string,
   branch?: string,
 ): Promise<string> {
   const commits: { sha: string } = await fetch(
     `${API}/repos/${repo}/commits/${branch ?? "master"}`,
     headers,
-  )
-    .then((response) => response.json());
+  ).then((res) => res.json());
+
   return commits.sha;
 }
 
-async function getLastTag(repo: string): Promise<string | undefined> {
+export async function getLastTag(repo: string): Promise<string | undefined> {
   const tags: { name: string }[] = await fetch(
     `${API}/repos/${repo}/tags`,
     headers,
-  )
-    .then((response) => response.json());
+  ).then((res) => res.json());
+
   return tags[0] ? tags[0].name : undefined;
 }
 
-async function getCommitsBetween(
+export async function getCommitsBetween(
   repo: string,
   from: string,
   to: string,
@@ -92,11 +100,9 @@ async function getCommitsBetween(
         message: string;
       };
     }[];
-  } = await fetch(
-    `${API}/repos/${repo}/compare/${from}...${to}`,
-    headers,
-  )
-    .then((response) => response.json());
+  } = await fetch(`${API}/repos/${repo}/compare/${from}...${to}`, headers)
+    .then((res) => res.json());
+
   const sha: { sha: string; message: string }[] = [];
   for (const commit of compare.commits) {
     sha.push({ sha: commit.sha, message: commit.commit.message });
@@ -104,7 +110,7 @@ async function getCommitsBetween(
   return sha;
 }
 
-function getPrNumber(message: string): string | undefined {
+export function getPrNumber(message: string): string | undefined {
   const merge = merge_commit.exec(message);
   const squash = squash_commit.exec(message);
 
@@ -117,12 +123,12 @@ function getPrNumber(message: string): string | undefined {
   }
 }
 
-async function getPullRequest(
+export async function getPullRequest(
   repo: string,
   number: string,
 ): Promise<PullRequest> {
   const pulls = await fetch(`${API}/repos/${repo}/pulls/${number}`, headers)
-    .then((response) => response.json());
+    .then((res) => res.json());
 
   const labels: { name: string; description: string }[] = [];
   for (const label of pulls.labels) {
@@ -139,15 +145,6 @@ async function getPullRequest(
 
   return pr;
 }
-
-/**
- * Returns an array of pull requests between two tags
- *
- * @param repo Github repository
- * @param from Start version
- * @param to End version
- * @param branch Default tag
- */
 
 export async function getChanges(
   repo: string,
@@ -171,11 +168,13 @@ export async function getChanges(
 
   for (const commit of commits_between) {
     const pr_number = getPrNumber(commit.message);
+
     if (pr_number) {
       const pull = await getPullRequest(repo, pr_number);
       prs.push(pull);
     }
   }
+
   return prs.sort((a, b) => {
     if (a.title.toLowerCase() < b.title.toLowerCase()) return -1;
     if (a.title.toLowerCase() > b.title.toLowerCase()) return 1;
@@ -183,36 +182,25 @@ export async function getChanges(
   });
 }
 
-/**
- * Returns auto generated changelog using GFM or CommomMark markdown spec with template applied
- * @param template Release notes template
- * @param repo Name of the GitHub repository
- * @param from Start version
- * @param to End version
- * @param branch Default branch
- * @param tag Override the default placeholder tag in template
- * @param markdown Use CommonMark spec instead of GFM
- */
 export default async function prlog(
   template: string,
   repo: string,
   from?: string,
   to?: string,
   branch?: string,
-  tag?: string,
-  markdown?: boolean,
+  options?: prlogOptions,
 ): Promise<string> {
   const changes = await getChanges(repo, from, to, branch);
+
   let lines: string[] = [];
   for (const change of changes) {
-    lines.push(
-      `- ${change.title} ${
-        markdown && repo
-          ? `([#${change.number}](${WEB}/${repo}/pull/${change.number}))`
-          : `(#${change.number})`
-      }`,
-    );
+    const number: string = options?.markdown
+      ? `[#${change.number}](${WEB}/${repo}/pull/${change.number})`
+      : `#${change.number}`;
+
+    lines.push(`- ${change.title} (${number})`);
   }
+
   const changelog = lines.join("\n");
-  return template.replaceAll(tag ?? "{{ CHANGELOG }}", changelog);
+  return template.replaceAll(options?.tag ?? "{{ CHANGELOG }}", changelog);
 }
