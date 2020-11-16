@@ -1,8 +1,8 @@
-import { parse, Args } from "./deps.ts";
+import { parse } from "./deps.ts";
 import prlog from "./mod.ts";
 import "./plugins/Version.ts";
 
-const args: Args = parse(Deno.args);
+const args = parse(Deno.args);
 
 if (args.h || args.help) {
   console.log(`
@@ -28,7 +28,7 @@ const repo: string = String(args._[0]);
 const from = args._[1] ? String(args._[1]) : undefined;
 const to = args._[2] ? String(args._[2]) : undefined;
 
-const template_file: string = (args.t ?? args.template);
+const template_file: string = args.t ?? args.template;
 const output: string = args.o ?? args.output;
 const version: string = args.v ?? args.version;
 const branch: string = args.b ?? args.branch;
@@ -39,9 +39,9 @@ const template: string = template_file
   ? await Deno.readTextFile(template_file)
   : "{{ CHANGELOG }}";
 
-const changelog: string =
-  (await prlog(template, repo, from, to, branch, { markdown: markdown }))
-    .prlogVersion(version ?? "UNRELEASED");
+const changelog: string = (
+  await prlog(template, repo, from, to, branch, { markdown: markdown })
+).prlogVersion(version ?? "UNRELEASED");
 
 if (output && append) {
   const old: string = await Deno.readTextFile(output);

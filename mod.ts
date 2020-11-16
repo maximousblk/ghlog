@@ -1,6 +1,6 @@
-import { parse, Args } from "./deps.ts";
+import { parse } from "./deps.ts";
 
-const args: Args = parse(Deno.args);
+const args = parse(Deno.args);
 
 const GITHUB_TOKEN: string = args.auth ?? Deno.env.get("GITHUB_TOKEN");
 
@@ -127,19 +127,19 @@ export async function getPullRequest(
   repo: string,
   number: string,
 ): Promise<PullRequest> {
-  const pulls = await fetch(`${API}/repos/${repo}/pulls/${number}`, headers)
+  const pull = await fetch(`${API}/repos/${repo}/pulls/${number}`, headers)
     .then((res) => res.json());
 
   const labels: { name: string; description: string }[] = [];
-  for (const label of pulls.labels) {
+  for (const label of pull.labels) {
     labels.push({ name: label.name, description: label.description });
   }
 
   const pr: PullRequest = {
-    number: pulls.number,
-    title: pulls.title,
-    body: pulls.body,
-    user: pulls.user.login,
+    number: pull.number,
+    title: pull.title,
+    body: pull.body,
+    user: pull.user.login,
     labels: labels,
   };
 
