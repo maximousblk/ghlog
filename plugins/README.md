@@ -1,8 +1,10 @@
 # prlog plugins
 
-prlog plugins are extentions for `String` prototype that can be chained together.
+prlog plugins are extentions for `String` prototype that can be chained
+together.
 
-> **NOTE:** It is recommended that you prefix your plugin name with `prlog` or any desired identifier to avoid confusion.
+> **NOTE:** It is recommended that you prefix your plugin name with `prlog` or
+> any desired identifier to avoid confusion.
 
 example:
 
@@ -21,7 +23,8 @@ String.prototype.prlogMyPlugin = function (): string {
 export {};
 ```
 
-To use a plugin, just import the plugin file and it will be globally available on every string
+To use a plugin, just import the plugin file and it will be globally available
+on every string
 
 ```ts
 // release.ts
@@ -74,7 +77,8 @@ String().prlogSetDate(date?: string, format?: string, tag?: string): string
 **paremeters:**
 
 - `date?` - Optional date. Defauts to current date
-- `format?` - Optional date format. Defaults to `dd MM yyyy`. [more info](https://deno.land/std@0.67.0/datetime#usage)
+- `format?` - Optional date format. Defaults to `dd MM yyyy`.
+  [more info](https://deno.land/std@0.67.0/datetime#usage)
 - `tag?` - Optional custom tag
 
 #### CodeName
