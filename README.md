@@ -45,7 +45,7 @@ access token.
 
 ## Templates
 
-`ghlog` provides a sane default template out of the box, but if you want more custom template, you can use [`mod.ts`](./mod.ts) as a reference and create your own templates.
+`ghlog` provides a sane default template out of the box, but if you want more custom template, you can use the `defaultChangelog()` function in [`mod.ts`](./mod.ts#L6-L56) as a reference and create your own templates.
 
 ## License
 
