@@ -17,7 +17,7 @@ export async function getTagCommit(
   repo: string,
   tag: string,
 ): Promise<string> {
-  const { data } = await octokit.request(
+  const { data: tagRef } = await octokit.request(
     "GET /repos/{user}/{repo}/git/refs/tags/{tag}",
     {
       user,
@@ -26,7 +26,17 @@ export async function getTagCommit(
     },
   );
 
-  return data.object.sha;
+  if (tagRef.object.type == "commit") return tagRef.object.sha;
+
+  const { data: tagDetails } = await octokit.request(
+    "GET /repos/{user}/{repo}/git/tags/{tag}",
+    {
+      user,
+      repo,
+      tag: tagRef.object.sha,
+    },
+  );
+  return tagDetails.object.sha;
 }
 
 export async function getOldestCommit(
@@ -126,6 +136,7 @@ export async function getChanges(
   }[]
 > {
   const fromTag: string | undefined = base ?? (await getNewestTag(user, repo));
+
   const fromCommit: string = fromTag
     ? await getTagCommit(user, repo, fromTag)
     : await getOldestCommit(user, repo);
