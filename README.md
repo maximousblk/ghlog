@@ -1,10 +1,18 @@
 # ghlog
 
-Generate release notes based on GitHub Commits and Pull Requests
+Generate release notes based on GitHub Commits.
+
+`ghlog` categorises the commits based on [Conventional Commits](https://www.conventionalcommits.org). All the commits that don't follow the CC patern are not considered.
+
+try it now:
+
+```
+deno run -A https://deno.land/x/ghlog/ghlog.ts nestdotland/nest
+```
 
 ## Install
 
-You can install ghlog using the following command.
+You can install `ghlog` using the following command.
 
 ```sh
 deno install -A https://deno.land/x/ghlog/ghlog.ts
@@ -18,26 +26,26 @@ ghlog <user/repo> [ ...arguments ] [ ...options ]
 
 #### Arguments
 
-| argument     | description                                                              |
-| ------------ | ------------------------------------------------------------------------ |
-| `[base_ref]` | where to start counting changes. Defaults to last tag or initial commit. |
-| `[head_ref]` | where to stop counting changes. Defaults to the latest commit.           |
+| argument     | description                                                     |
+| ------------ | --------------------------------------------------------------- |
+| `[base_ref]` | git ref to newest commit. (default: last tag or initial commit) |
+| `[head_ref]` | git ref to oldest commit. (default: the latest commit)          |
 
 #### Options
 
-| option          | description                                                       |
-| --------------- | ----------------------------------------------------------------- |
-| `-h, --help`    | show help                                                         |
-| `-o, --output`  | location where to output release notes (default: `CHANGELOG.md`)  |
-| `-v, --version` | version to use in release notes (default: "UNRELEASED")           |
-| `--auth`        | Use this to avoid API rate limits and access private repositories |
+| option          | description                                                |
+| --------------- | ---------------------------------------------------------- |
+| `-h, --help`    | show help                                                  |
+| `-o, --output`  | location to release notes output (default: `CHANGELOG.md`) |
+| `-v, --version` | version to use in release notes (default: "UNRELEASED")    |
+| `--auth`        | use this to avoid API rate limits and access private repos |
 
 You can also use the `GITHUB_TOKEN` environment variable to use the GitHub
 access token.
 
 ## Templates
 
-ghlog provides a default template out of the box, but if you want more custom template, you can use [`mod.ts`](./mod.ts) as a reference and create your own templates.
+`ghlog` provides a sane default template out of the box, but if you want more custom template, you can use [`mod.ts`](./mod.ts) as a reference and create your own templates.
 
 ## License
 

@@ -1,7 +1,7 @@
+export { getChangeLog } from "./src/main.ts";
+export type { Config } from "./src/main.ts";
 import { getChangeLog } from "./src/main.ts";
 import type { Config } from "./src/main.ts";
-
-export { getChangeLog } from "./src/main.ts";
 
 export async function defaultChangelog(
   repo: { name: string; base?: string; head?: string },
@@ -36,7 +36,7 @@ export async function defaultChangelog(
           .map((commit) => {
             return `- [\`${
               commit.sha.substring(0, 7)
-            }\`](https://github.com/${repo.name}/commit/${commit.sha}) ${commit.message} (@${commit.author})`;
+            }\`](https://github.com/${repo.name}/commit/${commit.sha}) ${commit.message} (${commit.author})`;
           })
           .join("\n");
 
@@ -49,7 +49,7 @@ export async function defaultChangelog(
 
 ${
     Array.from(changelog.authors)
-      .map((commiter) => `- @${commiter}`)
+      .map((commiter) => `- ${commiter}`)
       .join("\n")
   }
 `;
