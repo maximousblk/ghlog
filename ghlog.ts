@@ -19,6 +19,7 @@ Options:
   -o, --output   <path>     - location of changelog output (default: CHANGELOG.md)
   -v, --version  <version>  - release tag
   -n, --name     <name>     - release name
+  -a, --append              - append to existing changelog
       --auth     <token>    - GitHub access token
 `);
   Deno.exit(0);
@@ -31,10 +32,16 @@ const head = args._[2] ? String(args._[2]) : undefined;
 const output: string = args.o ?? args.output;
 const tag: string = args.v ?? args.version ?? "UNRELEASED";
 const name: string = args.n ?? args.name;
+const append: boolean = args.a ?? args.append;
 
 const changelog = await defaultChangelog(
   { name: repo, base, head },
   { name, tag, date: formatTime(new Date(), "dd.MM.yyyy") },
 );
 
-Deno.writeTextFile(output ?? "CHANGELOG.md", changelog);
+if (append) {
+  const oldChangelog = await Deno.readTextFile(output ?? "CHANGELOG.md");
+  Deno.writeTextFile(output ?? "CHANGELOG.md", changelog + "\n" + oldChangelog);
+} else {
+  Deno.writeTextFile(output ?? "CHANGELOG.md", changelog);
+}
