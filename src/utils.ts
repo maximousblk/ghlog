@@ -117,7 +117,15 @@ export async function getCommitsBetween(
     commits.push({
       sha: commit.sha,
       message: commit.commit.message,
-      author: commit.author.login,
+      author: commit.author
+        ? "@" + commit.author.login
+        : commit.committer
+        ? "@" + commit.committer.login
+        : commit.commit
+        ? commit.commit.author
+          ? commit.commit.author.name
+          : commit.commit.committer.name
+        : "@ghost",
     });
   }
   return commits;
