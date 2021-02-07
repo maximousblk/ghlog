@@ -28,20 +28,21 @@ ghlog <user/repo> [ ...arguments ] [ ...options ]
 
 #### Arguments
 
-| argument     | description                                                     |
-| ------------ | --------------------------------------------------------------- |
-| `[base_ref]` | git ref to newest commit. (default: last tag or initial commit) |
-| `[head_ref]` | git ref to oldest commit. (default: the latest commit)          |
+| argument     | default                    | description               |
+| ------------ | -------------------------- | ------------------------- |
+| `[base_ref]` | last tag or initial commit | git ref to newest commit. |
+| `[head_ref]` | the latest commit          | git ref to oldest commit. |
 
 #### Options
 
-| option          | description                                                |
-| --------------- | ---------------------------------------------------------- |
-| `-h, --help`    | show help                                                  |
-| `-o, --output`  | location to release notes output (default: `CHANGELOG.md`) |
-| `-v, --version` | tag to use in release notes (default: "UNRELEASED")        |
-| `-n, --name`    | name to use in release notes                               |
-| `--auth`        | use this to avoid API rate limits and access private repos |
+| option          | default        | description                              |
+| --------------- | -------------- | ---------------------------------------- |
+| `-h, --help`    |                | show help                                |
+| `-o, --output`  | `CHANGELOG.md` | location to release notes output         |
+| `-v, --version` | `UNRELEASED`   | tag to use in release notes              |
+| `-n, --name`    |                | name to use in release notes             |
+| `-a, --append`  |                | append to existing changelog             |
+| `--auth`        |                | GitHub access token to avoid rate limits |
 
 You can also use the `GITHUB_TOKEN` environment variable to use the GitHub
 access token.
