@@ -28,10 +28,11 @@ export async function defaultChangelog(
     stats,
   ].join(" ");
 
-  return `${metadata}${
+  return `${metadata}
+${
     Object.entries(changelog.changes)
       .map(([, change]) => {
-        const title = `\n\n## ${change.emoji} ${change.title}\n\n`;
+        const title = `\n## ${change.emoji} ${change.title}\n\n`;
         const changes = change.commits
           .map((commit) => {
             return `- [\`${
@@ -42,7 +43,7 @@ export async function defaultChangelog(
 
         return title + changes;
       })
-      .join()
+      .join("\n")
   }
 
 ## 👥 Contributors
