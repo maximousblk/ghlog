@@ -2,7 +2,9 @@
 
 Generate release notes based on GitHub Commits.
 
-`ghlog` categorises the commits based on [Conventional Commits](https://www.conventionalcommits.org). All the commits that don't follow the CC patern are not considered.
+`ghlog` categorises the commits based on
+[Conventional Commits](https://www.conventionalcommits.org). All the commits
+that don't follow the CC patern are not considered.
 
 try it now:
 
@@ -37,7 +39,8 @@ ghlog <user/repo> [ ...arguments ] [ ...options ]
 | --------------- | ---------------------------------------------------------- |
 | `-h, --help`    | show help                                                  |
 | `-o, --output`  | location to release notes output (default: `CHANGELOG.md`) |
-| `-v, --version` | version to use in release notes (default: "UNRELEASED")    |
+| `-v, --version` | tag to use in release notes (default: "UNRELEASED")        |
+| `-n, --name`    | name to use in release notes                               |
 | `--auth`        | use this to avoid API rate limits and access private repos |
 
 You can also use the `GITHUB_TOKEN` environment variable to use the GitHub
@@ -45,7 +48,9 @@ access token.
 
 ## Templates
 
-`ghlog` provides a sane default template out of the box, but if you want more custom template, you can use the `defaultChangelog()` function in [`mod.ts`](./mod.ts#L6-L56) as a reference and create your own templates.
+`ghlog` provides a sane default template out of the box, but if you want more
+custom template, you can use the `defaultChangelog()` function in
+[`mod.ts`](./mod.ts#L6-L56) as a reference and create your own templates.
 
 ## License
 

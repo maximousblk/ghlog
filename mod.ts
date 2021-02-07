@@ -6,7 +6,7 @@ import type { Config } from "./src/main.ts";
 export async function defaultChangelog(
   repo: { name: string; base?: string; head?: string },
   release: {
-    name: string;
+    name?: string;
     tag: string;
     date: string;
   },
@@ -14,10 +14,10 @@ export async function defaultChangelog(
 ): Promise<string> {
   const changelog = await getChangeLog(repo.name, repo.base, repo.head, config);
 
+  const title = release.name ? `# ${release.name}\n` : "";
+
   const stats = Object.entries(changelog.changes)
-    .map(([, main]) => {
-      return `\`${main.emoji} ${main.count}\``;
-    })
+    .map(([, main]) => `\`${main.emoji} ${main.count}\``)
     .join(" ");
 
   const metadata = [
@@ -28,7 +28,7 @@ export async function defaultChangelog(
     stats,
   ].join(" ");
 
-  return `${metadata}
+  return `${title}${metadata}
 ${
     Object.entries(changelog.changes)
       .map(([, change]) => {
