@@ -143,10 +143,18 @@ export async function getChanges(
     author: string;
   }[]
 > {
-  const fromTag: string | undefined = base ?? (await getNewestTag(user, repo));
+  const isCommitHash = (ref: string) => {
+    const shortHashExp = /([a-f0-9]{7})/;
+    const longHashExp = /([a-f0-9]{40})/;
+    return shortHashExp.test(ref) || longHashExp.test(ref);
+  };
 
-  const fromCommit: string = fromTag
-    ? await getTagCommit(user, repo, fromTag)
+  const fromRef: string | undefined = base ?? (await getNewestTag(user, repo));
+
+  const fromCommit: string = fromRef && isCommitHash(fromRef)
+    ? fromRef
+    : fromRef
+    ? await getTagCommit(user, repo, fromRef)
     : await getOldestCommit(user, repo);
 
   const toCommit: string = head
