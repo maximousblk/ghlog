@@ -14,7 +14,7 @@ export async function defaultChangelog(
 ): Promise<string> {
   const changelog = await getChangeLog(repo.name, repo.base, repo.head, config);
 
-  const title = release.name ? `# ${release.name}\n` : "";
+  const title = release.name ? `# ${release.name}\n\n` : "";
 
   const stats = Object.entries(changelog.changes)
     .map(([, main]) => `\`${main.emoji} ${main.count}\``)
