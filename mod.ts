@@ -1,39 +1,44 @@
 export { getChangeLog } from "./src/main.ts";
 export type { Config } from "./src/main.ts";
+
 import { getChangeLog } from "./src/main.ts";
 import type { Config } from "./src/main.ts";
+import { formatTime } from "./src/deps.ts";
 
-export async function defaultChangelog(
-  repo: { name: string; base?: string; head?: string },
-  release: {
+export async function getDefaultChangelog(
+  repo: {
+    name: string;
+    base?: string;
+    head?: string;
+  },
+  release?: {
+    tag?: string;
     name?: string;
-    tag: string;
-    date: string;
+    date?: string;
   },
   config?: Config,
 ): Promise<string> {
   const changelog = await getChangeLog(repo.name, repo.base, repo.head, config);
 
-  const title = release.name ? `# ${release.name}\n\n` : "";
+  const title = release?.name ? `# ${release?.name}\n\n` : "";
 
-  const stats = Object.entries(changelog.changes)
-    .map(([, main]) => `\`${main.emoji} ${main.count}\``)
+  const counts = changelog.changes
+    .map(({ emoji, count }) => `\`${emoji} ${count}\``)
     .join(" ");
 
-  const metadata = [
-    `\`📆 ${release.date}\``,
-    `\`🏷️ ${release.tag}\``,
-    `\`💾 ${changelog.newestCommit.substring(0, 7)}\``,
-    `\`👥 ${changelog.authors.size}\``,
-    stats,
+  const stats = [
+    `\`📆 ${release?.date ?? formatTime(new Date(), "dd.MM.yyyy")}\``,
+    `\`🏷️ ${release?.tag ?? "UNRELEASED"}\``,
+    `\`💾 ${changelog._meta.head.substring(0, 7)}\``,
+    counts,
+    `\`👥 ${changelog._meta.contributors.length}\``,
   ].join(" ");
 
-  return `${title}${metadata}
+  return `${title}${stats}
 ${
-    Object.entries(changelog.changes)
-      .map(([, change]) => {
-        const title = `\n## ${change.emoji} ${change.title}\n\n`;
-        const changes = change.commits
+    changelog.changes
+      .map(({ emoji, title, commits }) => {
+        const changes = commits
           .map((commit) => {
             return `- [\`${
               commit.sha.substring(0, 7)
@@ -41,17 +46,13 @@ ${
           })
           .join("\n");
 
-        return title + changes;
+        return `\n## ${emoji} ${title}\n\n` + changes;
       })
       .join("\n")
   }
 
 ## 👥 Contributors
 
-${
-    Array.from(changelog.authors)
-      .map((commiter) => `- ${commiter}`)
-      .join("\n")
-  }
+${changelog._meta.contributors.map((name) => `- ${name}`).join("\n")}
 `;
 }

@@ -23,7 +23,7 @@ deno install -A https://deno.land/x/ghlog/ghlog.ts
 ## Usage
 
 ```sh
-ghlog <user/repo> [ ...arguments ] [ ...options ]
+ghlog <owner/repo> [ ...arguments ] [ ...options ]
 ```
 
 #### Arguments
@@ -40,6 +40,7 @@ ghlog <user/repo> [ ...arguments ] [ ...options ]
 | `-h, --help`    |                | show help                                |
 | `-o, --output`  | `CHANGELOG.md` | location to release notes output         |
 | `-v, --version` | `UNRELEASED`   | tag to use in release notes              |
+| `-d, --date`    | current date   | tag to use in release notes              |
 | `-n, --name`    |                | name to use in release notes             |
 | `-a, --append`  |                | append to existing changelog             |
 | `--auth`        |                | GitHub access token to avoid rate limits |
@@ -49,9 +50,10 @@ access token.
 
 ## Templates
 
-`ghlog` provides a sane default template out of the box, but if you want more
-custom template, you can use the `defaultChangelog()` function in
-[`mod.ts`](./mod.ts#L6-L56) as a reference and create your own templates.
+`ghlog` provides a sane default template out of the box that works great with
+github releases, but if you want more custom template, you can use the
+`defaultChangelog()` function in [`mod.ts`](./mod.ts#L8-L58) as a reference and
+create your own templates.
 
 ## License
 

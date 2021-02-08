@@ -1,4 +1,4 @@
-import { getChanges, getNewestCommit, sortCommits } from "./utils.ts";
+import { getChanges, sortCommits } from "./utils.ts";
 
 export interface Config {
   categories: {
@@ -8,85 +8,83 @@ export interface Config {
   }[];
 }
 
-const defaultConfig: Config = {
+export const defaultConfig: Config = {
   categories: [
-    {
-      name: "feat",
-      emoji: "🚀",
-      title: "New Features",
-    },
-    {
-      name: "fix",
-      emoji: "🐛",
-      title: "Bug fixes",
-    },
-    {
-      name: "docs",
-      emoji: "📄",
-      title: "Documentation",
-    },
-    {
-      name: "chore",
-      emoji: "✏️",
-      title: "Chores",
-    },
+    { name: "feat", emoji: "🚀", title: "New Features" },
+    { name: "fix", emoji: "🐛", title: "Bug fixes" },
+    { name: "docs", emoji: "📄", title: "Documentation" },
+    { name: "chore", emoji: "✏️", title: "Chores" },
   ],
 };
 
 export async function getChangeLog(
-  repository: string,
+  repo: string,
   base?: string,
   head?: string,
-  configuration?: Config,
+  config?: Config,
 ) {
-  const [user, repo] = repository.split("/");
+  const [owner, repoName] = repo.split("/");
 
-  const config = Object.assign({}, defaultConfig, configuration);
+  const configuration = Object.assign({}, defaultConfig, config);
 
-  const allCommits = await getChanges(user, repo, base, head);
-
-  const sortedcommits = sortCommits(
-    allCommits,
-    config.categories.map(({ name }) => name),
+  const { baseCommit, headCommit, commits } = await getChanges(
+    owner,
+    repoName,
+    base,
+    head,
   );
 
-  const changes: Record<
-    string,
-    {
-      name: string;
-      title: string;
-      emoji: string;
-      count: number;
-      commits: { sha: string; message: string; author: string }[];
-    }
-  > = {};
+  const sortedCommits = sortCommits(
+    commits,
+    configuration.categories.map(({ name }) => name),
+  );
 
-  const commitAuthors: string[] = [];
+  const changes: {
+    name: string;
+    title: string;
+    emoji: string;
+    count: number;
+    commits: { sha: string; message: string; author: string }[];
+  }[] = [];
 
-  config.categories.forEach(({ name, title, emoji }) => {
-    if (sortedcommits[name].length) {
-      sortedcommits[name].forEach((commit) =>
-        commitAuthors.push(commit.author)
-      );
-      changes[name] = {
+  const authors: string[] = [];
+
+  configuration.categories.forEach(({ name, title, emoji }) => {
+    if (sortedCommits[name].length) {
+      sortedCommits[name].forEach(({ author }) => authors.push(author));
+      changes.push({
         name,
         title,
         emoji,
-        count: sortedcommits[name].length,
-        commits: sortedcommits[name].map((commit) => commit),
-      };
+        count: sortedCommits[name].length,
+        commits: sortedCommits[name],
+      });
     }
   });
 
-  const newestCommit = await getNewestCommit(user, repo);
+  const contributors = Array.from(new Set(authors));
 
-  const authors = new Set(commitAuthors);
+  const _meta = {
+    repo: {
+      owner: owner,
+      name: repoName,
+      fullname: repo,
+    },
+    base: baseCommit,
+    head: headCommit,
+    commits: {
+      all: commits,
+      sorted: sortedCommits,
+    },
+    contributors,
+    config: {
+      default: defaultConfig,
+      input: config,
+    },
+  };
 
   return {
     changes,
-    authors,
-    allCommits,
-    newestCommit,
-    sortedcommits,
+    _meta,
   };
 }

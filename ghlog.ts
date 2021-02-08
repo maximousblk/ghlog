@@ -1,5 +1,5 @@
-import { formatTime, parseFlags } from "./src/deps.ts";
-import { defaultChangelog } from "./mod.ts";
+import { parseFlags } from "./src/deps.ts";
+import { getDefaultChangelog } from "./mod.ts";
 
 const args = parseFlags(Deno.args);
 
@@ -8,7 +8,7 @@ if (!args._[0] || args.h || args.help) {
 ghlog - Generate release notes based on GitHub commits
 
 Usage:
-  ghlog <user/repo> [base_ref] [head_ref] [ ...options ]
+  ghlog <owner/repo> [base_ref] [head_ref] [ ...options ]
 
 Arguments:
   base_ref - git ref to newest commit. (default: last tag or initial commit)
@@ -19,6 +19,7 @@ Options:
   -o, --output   <path>     - location of changelog output (default: CHANGELOG.md)
   -v, --version  <version>  - release tag
   -n, --name     <name>     - release name
+  -d, --date     <date>     - release date
   -a, --append              - append to existing changelog
       --auth     <token>    - GitHub access token
 `);
@@ -30,13 +31,14 @@ const base = args._[1] ? String(args._[1]) : undefined;
 const head = args._[2] ? String(args._[2]) : undefined;
 
 const output: string = args.o ?? args.output;
-const tag: string = args.v ?? args.version ?? "UNRELEASED";
+const tag: string = args.v ?? args.version;
 const name: string = args.n ?? args.name;
+const date: string = args.d ?? args.date;
 const append: boolean = args.a ?? args.append;
 
-const changelog = await defaultChangelog(
+const changelog = await getDefaultChangelog(
   { name: repo, base, head },
-  { name, tag, date: formatTime(new Date(), "dd.MM.yyyy") },
+  { name, tag, date },
 );
 
 if (append) {

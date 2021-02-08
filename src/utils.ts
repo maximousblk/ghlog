@@ -1,5 +1,4 @@
 import { Octokit, parseCommit, parseFlags } from "./deps.ts";
-import type { Commit } from "./deps.ts";
 
 const GITHUB_TOKEN: string = parseFlags(Deno.args).auth ??
   Deno.env.get("GITHUB_TOKEN");
@@ -13,14 +12,14 @@ export async function sleep(interval: number) {
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 export async function getTagCommit(
-  user: string,
+  owner: string,
   repo: string,
   tag: string,
 ): Promise<string> {
   const { data: tagRef } = await octokit.request(
-    "GET /repos/{user}/{repo}/git/refs/tags/{tag}",
+    "GET /repos/{owner}/{repo}/git/refs/tags/{tag}",
     {
-      user,
+      owner,
       repo,
       tag,
     },
@@ -29,9 +28,9 @@ export async function getTagCommit(
   if (tagRef.object.type == "commit") return tagRef.object.sha;
 
   const { data: tagDetails } = await octokit.request(
-    "GET /repos/{user}/{repo}/git/tags/{tag}",
+    "GET /repos/{owner}/{repo}/git/tags/{tag}",
     {
-      user,
+      owner,
       repo,
       tag: tagRef.object.sha,
     },
@@ -40,25 +39,28 @@ export async function getTagCommit(
 }
 
 export async function getOldestCommit(
-  user: string,
+  owner: string,
   repo: string,
 ): Promise<string> {
   const {
     data: commits,
     headers: { link },
-  } = await octokit.request("GET /repos/{user}/{repo}/commits", {
-    user,
+  } = await octokit.request("GET /repos/{owner}/{repo}/commits", {
+    owner,
     repo,
   });
 
   const [, lastPage] = /page=([0-9]+)>; rel="last"/.exec(link) ?? [];
 
   if (lastPage) {
-    const { data } = await octokit.request("GET /repos/{user}/{repo}/commits", {
-      user,
-      repo,
-      page: lastPage,
-    });
+    const { data } = await octokit.request(
+      "GET /repos/{owner}/{repo}/commits",
+      {
+        owner,
+        repo,
+        page: lastPage,
+      },
+    );
     return data[data.length - 1].sha;
   } else {
     return commits[commits.length - 1].sha;
@@ -66,11 +68,11 @@ export async function getOldestCommit(
 }
 
 export async function getNewestCommit(
-  user: string,
+  owner: string,
   repo: string,
 ): Promise<string> {
-  const { data } = await octokit.request("GET /repos/{user}/{repo}/commits", {
-    user,
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}/commits", {
+    owner,
     repo,
   });
 
@@ -78,14 +80,14 @@ export async function getNewestCommit(
 }
 
 export async function getNewestTag(
-  user: string,
+  owner: string,
   repo: string,
 ): Promise<string | undefined> {
   try {
     const { data } = await octokit.request(
-      "GET /repos/{user}/{repo}/releases/latest",
+      "GET /repos/{owner}/{repo}/releases/latest",
       {
-        user,
+        owner,
         repo,
       },
     );
@@ -97,15 +99,15 @@ export async function getNewestTag(
 }
 
 export async function getCommitsBetween(
-  user: string,
+  owner: string,
   repo: string,
   base: string,
   head: string,
 ): Promise<{ sha: string; message: string; author: string }[]> {
   const { data } = await octokit.request(
-    "GET /repos/{user}/{repo}/compare/{base}...{head}",
+    "GET /repos/{owner}/{repo}/compare/{base}...{head}",
     {
-      user,
+      owner,
       repo,
       base,
       head,
@@ -132,16 +134,20 @@ export async function getCommitsBetween(
 }
 
 export async function getChanges(
-  user: string,
+  owner: string,
   repo: string,
   base?: string,
   head?: string,
 ): Promise<
   {
-    sha: string;
-    message: string;
-    author: string;
-  }[]
+    baseCommit: string;
+    headCommit: string;
+    commits: {
+      sha: string;
+      message: string;
+      author: string;
+    }[];
+  }
 > {
   const isCommitHash = (ref: string) => {
     const shortHashExp = /([a-f0-9]{7})/;
@@ -149,26 +155,30 @@ export async function getChanges(
     return shortHashExp.test(ref) || longHashExp.test(ref);
   };
 
-  const fromRef: string | undefined = base ?? (await getNewestTag(user, repo));
+  const baseRef: string | undefined = base ?? (await getNewestTag(owner, repo));
 
-  const fromCommit: string = fromRef && isCommitHash(fromRef)
-    ? fromRef
-    : fromRef
-    ? await getTagCommit(user, repo, fromRef)
-    : await getOldestCommit(user, repo);
+  const baseCommit: string = baseRef && isCommitHash(baseRef)
+    ? baseRef
+    : baseRef
+    ? await getTagCommit(owner, repo, baseRef)
+    : await getOldestCommit(owner, repo);
 
-  const toCommit: string = head
-    ? await getTagCommit(user, repo, head)
-    : await getNewestCommit(user, repo);
+  const headCommit: string = head
+    ? await getTagCommit(owner, repo, head)
+    : await getNewestCommit(owner, repo);
 
   const commitsBetween = await getCommitsBetween(
-    user,
+    owner,
     repo,
-    fromCommit,
-    toCommit,
+    baseCommit,
+    headCommit,
   );
 
-  return commitsBetween;
+  return {
+    baseCommit,
+    headCommit,
+    commits: commitsBetween,
+  };
 }
 
 export function sortCommits(
@@ -179,7 +189,7 @@ export function sortCommits(
     string,
     { sha: string; message: string; author: string }[]
   > = {
-    _unsorted: [],
+    _misc: [],
   };
 
   filters.forEach((filter) => {
@@ -193,16 +203,20 @@ export function sortCommits(
       return 0;
     })
     .forEach((commit) => {
-      const parsedCommit: Commit = parseCommit(commit.message);
+      const parsedCommit = parseCommit(commit.message);
 
-      if (parsedCommit.type && filters.includes(parsedCommit.type)) {
+      if (
+        parsedCommit.type &&
+        filters.includes(parsedCommit?.type) &&
+        parsedCommit.header
+      ) {
         sorted[parsedCommit.type].push({
           sha: commit.sha,
-          message: parsedCommit.header || "",
+          message: parsedCommit.header,
           author: commit.author,
         });
       } else {
-        sorted._unsorted.push(commit);
+        sorted._misc.push(commit);
       }
     });
 
