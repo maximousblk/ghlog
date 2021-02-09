@@ -12,8 +12,15 @@ export const defaultConfig: Config = {
   categories: [
     { name: "feat", emoji: "🚀", title: "New Features" },
     { name: "fix", emoji: "🐛", title: "Bug fixes" },
-    { name: "docs", emoji: "📄", title: "Documentation" },
+    { name: "docs", emoji: "📚", title: "Documentation" },
+    { name: "style", emoji: "🎨", title: "Styles" },
+    { name: "refactor", emoji: "♻️", title: "Refactors" },
+    { name: "perf", emoji: "💨", title: "Performance" },
+    { name: "test", emoji: "🔬", title: "Tests" },
+    { name: "build", emoji: "👷", title: "Builds" },
+    { name: "ci", emoji: "✔️", title: "CI/CD" },
     { name: "chore", emoji: "✏️", title: "Chores" },
+    { name: "revert", emoji: "⏪", title: "Reverts" },
   ],
 };
 
