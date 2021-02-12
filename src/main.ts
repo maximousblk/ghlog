@@ -1,13 +1,24 @@
-import { getChanges, sortCommits } from "./utils.ts";
+import { getCommits, groupCommits, processCommits } from "./utils.ts";
+import type { Commit, RawCommit } from "./utils.ts";
 
+/**
+ * Changelog configuration
+ */
 export interface Config {
   categories: {
     name: string;
     emoji: string;
     title: string;
   }[];
+  contributors: {
+    exclude: string[];
+    includeBots: boolean;
+  };
 }
 
+/**
+ * Default changelog configuration
+ */
 export const defaultConfig: Config = {
   categories: [
     { name: "feat", emoji: "🚀", title: "New Features" },
@@ -22,72 +33,96 @@ export const defaultConfig: Config = {
     { name: "chore", emoji: "✏️", title: "Chores" },
     { name: "revert", emoji: "⏪", title: "Reverts" },
   ],
+  contributors: {
+    exclude: ["@web-flow", "@ghost"],
+    includeBots: false,
+  },
 };
 
+/**
+ * Get a list of grouped changes and other metadata
+ * @param repo repository name in format `owner/repo`
+ * @param base git ref for base commit
+ * @param head git ref for head commit
+ * @param config changelog configuration
+ * @returns array of grouped changes
+ */
 export async function getChangeLog(
   repo: string,
   base?: string,
   head?: string,
   config?: Config,
 ) {
-  const [owner, repoName] = repo.split("/");
+  const [owner, repository] = repo.split("/");
 
-  const configuration = Object.assign({}, defaultConfig, config);
+  const configuration: Config = Object.assign({}, defaultConfig, config);
 
-  const { baseCommit, headCommit, commits } = await getChanges(
-    owner,
-    repoName,
-    base,
-    head,
-  );
+  const commits: RawCommit[] = await getCommits(owner, repository, base, head);
 
-  const sortedCommits = sortCommits(
-    commits,
-    configuration.categories.map(({ name }) => name),
-  );
+  const processed: Commit[] = processCommits(commits);
+
+  const filters: string[] = configuration.categories.map(({ name }) => name);
+
+  const groups: Record<string, Commit[]> = groupCommits(processed, filters);
 
   const changes: {
     name: string;
     title: string;
     emoji: string;
     count: number;
-    commits: { sha: string; message: string; author: string }[];
+    commits: Commit[];
   }[] = [];
+
+  const allCommits: Commit[] = [];
 
   const authors: string[] = [];
 
   configuration.categories.forEach(({ name, title, emoji }) => {
-    if (sortedCommits[name].length) {
-      sortedCommits[name].forEach(({ author }) => authors.push(author));
+    if (groups[name].length) {
+      groups[name].forEach(({ author }) => authors.push(author));
+      allCommits.push(...groups[name]);
       changes.push({
         name,
         title,
         emoji,
-        count: sortedCommits[name].length,
-        commits: sortedCommits[name],
+        count: groups[name].length,
+        commits: groups[name],
       });
     }
   });
 
-  const contributors = Array.from(new Set(authors));
+  const getContributors = (allContributors: string[]) => {
+    const contributors = new Set(allContributors);
+    if (!configuration.contributors.includeBots) {
+      allContributors.forEach((contributor) => {
+        if (contributor.endsWith("[bot]")) contributors.delete(contributor);
+      });
+    }
+    configuration.contributors.exclude.forEach((contributor) => {
+      contributors.delete(contributor);
+    });
+    return Array.from(contributors);
+  };
 
   const _meta = {
     repo: {
       owner: owner,
-      name: repoName,
+      name: repository,
       fullname: repo,
     },
-    base: baseCommit,
-    head: headCommit,
     commits: {
-      all: commits,
-      sorted: sortedCommits,
+      base: processed[0],
+      head: processed[processed.length - 1],
+      all: processed,
+      count: processed.length,
+      groups,
     },
-    contributors,
     config: {
       default: defaultConfig,
       input: config,
+      final: configuration,
     },
+    contributors: getContributors(authors),
   };
 
   return {

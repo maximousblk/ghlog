@@ -18,41 +18,44 @@ export async function getDefaultChangelog(
   },
   config?: Config,
 ): Promise<string> {
-  const changelog = await getChangeLog(repo.name, repo.base, repo.head, config);
+  const { _meta, changes } = await getChangeLog(
+    repo.name,
+    repo.base,
+    repo.head,
+    config,
+  );
 
   const title = release?.name ? `# ${release?.name}\n\n` : "";
 
-  const counts = changelog.changes
+  const counts = changes
     .map(({ emoji, count }) => `\`${emoji} ${count}\``)
     .join(" ");
 
   const stats = [
     `\`📆 ${release?.date ?? formatTime(new Date(), "dd.MM.yyyy")}\``,
     `\`🏷️ ${release?.tag ?? "UNRELEASED"}\``,
-    `\`💾 ${changelog._meta.head.substring(0, 7)}\``,
+    `\`💾 ${_meta.commits.head.shortSha}\``,
     counts,
-    `\`👥 ${changelog._meta.contributors.length}\``,
+    `\`👥 ${_meta.contributors.length}\``,
   ].join(" ");
 
   return `${title}${stats}
 ${
-    changelog.changes
+    changes
       .map(({ emoji, title, commits }) => {
+        const header = `## ${emoji} ${title}`;
         const changes = commits
-          .map((commit) => {
-            return `- [\`${
-              commit.sha.substring(0, 7)
-            }\`](https://github.com/${repo.name}/commit/${commit.sha}) ${commit.message} (${commit.author})`;
+          .map(({ shortSha, url, header, author }) => {
+            return `- [\`${shortSha}\`](${url}) ${header} (${author})`;
           })
           .join("\n");
-
-        return `\n## ${emoji} ${title}\n\n` + changes;
+        return `\n${header}\n\n${changes}`;
       })
       .join("\n")
   }
 
 ## 👥 Contributors
 
-${changelog._meta.contributors.map((name) => `- ${name}`).join("\n")}
+${_meta.contributors.map((name) => `- ${name}`).join("\n")}
 `;
 }
