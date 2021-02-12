@@ -50,10 +50,9 @@ access token.
 
 ## Templates
 
-`ghlog` provides a sane default template out of the box that works great with
-github releases, but if you want more custom template, you can use the
-`defaultChangelog()` function in [`mod.ts`](./mod.ts#L8-L58) as a reference and
-create your own templates.
+`ghlog` provides a sane default template out of the box that works great in most
+situations, but if you want a more custom template, you can use the
+[`examples/`](./examples) directory for reference and create your own templates.
 
 ## License
 
