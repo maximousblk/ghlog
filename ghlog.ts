@@ -30,7 +30,7 @@ const repo = String(args._[0]);
 const base = args._[1] ? String(args._[1]) : undefined;
 const head = args._[2] ? String(args._[2]) : undefined;
 
-const output: string = args.o ?? args.output;
+const output: string = args.o ?? args.output ?? "CHANGELOG.md";
 const tag: string = args.v ?? args.version;
 const name: string = args.n ?? args.name;
 const date: string = args.d ?? args.date;
@@ -42,8 +42,8 @@ const changelog = await getDefaultChangelog(
 );
 
 if (append) {
-  const oldChangelog = await Deno.readTextFile(output ?? "CHANGELOG.md");
-  Deno.writeTextFile(output ?? "CHANGELOG.md", changelog + "\n" + oldChangelog);
+  const oldChangelog = await Deno.readTextFile(output).catch((e) => "");
+  Deno.writeTextFile(output, changelog + "\n" + oldChangelog);
 } else {
-  Deno.writeTextFile(output ?? "CHANGELOG.md", changelog);
+  Deno.writeTextFile(output, changelog);
 }
