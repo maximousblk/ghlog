@@ -1,16 +1,30 @@
 import { formatTime } from "../src/deps.ts";
 import { getChangeLog } from "../src/main.ts";
 
-const { _meta } = await getChangeLog("denoland/deno");
+const { changes } = await getChangeLog(
+  "denoland/deno",
+  undefined,
+  undefined,
+  {
+    categories: [
+      { name: "BREAKING", emoji: "", title: "" },
+      { name: "feat", emoji: "", title: "" },
+      { name: "fix", emoji: "", title: "" },
+      { name: "upgrade", emoji: "", title: "" },
+    ],
+    contributors: {
+      exclude: ["@web-flow", "@ghost"],
+      includeBots: false,
+    },
+  },
+);
 
-const commits = _meta.commits.all
-  .slice()
-  .sort((a, b) => {
-    if (a.message.toLowerCase() < b.message.toLowerCase()) return -1;
-    if (a.message.toLowerCase() > b.message.toLowerCase()) return 1;
-    return 0;
+const commits = changes
+  .map(({ commits }) => {
+    return commits
+      .map(({ header }) => `- ${header}`)
+      .join("\n");
   })
-  .map(({ header }) => `- ${header}`)
   .join("\n");
 
 const version = Deno.args[0];
