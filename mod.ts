@@ -34,7 +34,7 @@ export async function getDefaultChangelog(
   const stats = [
     `\`📆 ${release?.date ?? formatTime(new Date(), "dd.MM.yyyy")}\``,
     `\`🏷️ ${release?.tag ?? "UNRELEASED"}\``,
-    `\`💾 ${_meta.commits.head.shortSha}\``,
+    `\`💾 ${_meta.commits.head.shortSha.toUpperCase()}\``,
     counts,
     `\`👥 ${_meta.contributors.length}\``,
   ].join(" ");
