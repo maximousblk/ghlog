@@ -58,7 +58,11 @@ export async function getChangeLog(
 
   const configuration: Config = Object.assign({}, defaultConfig, config);
 
-  const commits: RawCommit[] = await getCommits(owner, repository, base, head);
+  const {
+    commits,
+    base: baseCommit,
+    head: headCommit,
+  } = await getCommits(owner, repository, base, head);
 
   const processed: Commit[] = processCommits(commits);
 
@@ -112,8 +116,8 @@ export async function getChangeLog(
       fullname: repo,
     },
     commits: {
-      base: processed[0],
-      head: processed[processed.length - 1],
+      base: processCommits([baseCommit])[0],
+      head: processCommits([headCommit])[0],
       all: processed,
       count: processed.length,
       groups,

@@ -161,7 +161,11 @@ export async function getCommits(
   repo: string,
   base?: string,
   head?: string,
-): Promise<RawCommit[]> {
+): Promise<{
+  head: RawCommit;
+  base: RawCommit;
+  commits: RawCommit[];
+}> {
   const isCommitHash = (ref: string) => {
     const shortHashExp = /([a-f0-9]{7})/;
     const longHashExp = /([a-f0-9]{40})/;
@@ -209,13 +213,6 @@ export async function getCommits(
     return "@ghost";
   };
 
-  commits.push({
-    sha: data.base_commit.sha,
-    url: data.base_commit.html_url,
-    message: data.base_commit.commit.message,
-    author: getCommitAuthor(data.base_commit),
-  });
-
   for (const commit of data.commits) {
     commits.push({
       sha: commit.sha,
@@ -225,7 +222,16 @@ export async function getCommits(
     });
   }
 
-  return commits;
+  return {
+    base: {
+      sha: data.base_commit.sha,
+      url: data.base_commit.html_url,
+      message: data.base_commit.commit.message,
+      author: getCommitAuthor(data.base_commit),
+    },
+    head: commits[commits.length - 1],
+    commits,
+  };
 }
 
 /**
