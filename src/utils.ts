@@ -235,30 +235,28 @@ export async function getCommits(
 }
 
 /**
- * Extract metadata from `RawCommit` messages
- * @param commits array of `RawCommit`s
- * @returns array of `Commit`s with extended metadata
+ * Extract metadata from `RawCommit` message
+ * @param commits `RawCommit`
+ * @returns `Commit` with extended metadata
  */
-export function processCommits(commits: RawCommit[]): Commit[] {
-  return commits
-    .map(({ sha, message, author, url }) => {
-      const parsedCommit = parseCommit(message);
+export function processCommit(commit: RawCommit): Commit {
+  const { sha, message, author, url } = commit;
+  const parsedCommit = parseCommit(message);
 
-      const commitDetails: Commit = {
-        sha,
-        shortSha: sha.substring(0, 7),
-        url,
-        author,
-        type: parsedCommit.type ?? undefined,
-        scope: parsedCommit.scope ?? undefined,
-        subject: parsedCommit.subject ?? undefined,
-        header: parsedCommit.header ?? undefined,
-        body: parsedCommit.body ?? undefined,
-        message,
-      };
+  const commitDetails: Commit = {
+    sha,
+    shortSha: sha.substring(0, 7),
+    url,
+    author,
+    type: parsedCommit.type ?? undefined,
+    scope: parsedCommit.scope ?? undefined,
+    subject: parsedCommit.subject ?? undefined,
+    header: parsedCommit.header ?? undefined,
+    body: parsedCommit.body ?? undefined,
+    message,
+  };
 
-      return commitDetails;
-    });
+  return commitDetails;
 }
 
 /**

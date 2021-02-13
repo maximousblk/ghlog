@@ -1,5 +1,5 @@
-import { getCommits, groupCommits, processCommits } from "./utils.ts";
-import type { Commit, RawCommit } from "./utils.ts";
+import { getCommits, groupCommits, processCommit } from "./utils.ts";
+import type { Commit } from "./utils.ts";
 
 /**
  * Changelog configuration
@@ -59,16 +59,16 @@ export async function getChangeLog(
   const configuration: Config = Object.assign({}, defaultConfig, config);
 
   const {
-    commits,
+    commits: rawCommits,
     base: baseCommit,
     head: headCommit,
   } = await getCommits(owner, repository, base, head);
 
-  const processed: Commit[] = processCommits(commits);
+  const commits: Commit[] = rawCommits.map((commit) => processCommit(commit));
 
   const filters: string[] = configuration.categories.map(({ name }) => name);
 
-  const groups: Record<string, Commit[]> = groupCommits(processed, filters);
+  const groups: Record<string, Commit[]> = groupCommits(commits, filters);
 
   const changes: {
     name: string;
@@ -116,10 +116,10 @@ export async function getChangeLog(
       fullname: repo,
     },
     commits: {
-      base: processCommits([baseCommit])[0],
-      head: processCommits([headCommit])[0],
-      all: processed,
-      count: processed.length,
+      base: processCommit(baseCommit),
+      head: processCommit(headCommit),
+      all: commits,
+      count: commits.length,
       groups,
     },
     config: {
