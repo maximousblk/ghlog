@@ -46,7 +46,7 @@ ${
         const header = `## ${emoji} ${title}`;
         const changes = commits
           .map(({ shortSha, url, header, author }) => {
-            return `- [\`${shortSha}\`](${url}) ${header} (${author})`;
+            return `- [\`${shortSha.toUpperCase()}\`](${url}) ${header} (${author})`;
           })
           .join("\n");
         return `\n${header}\n\n${changes}`;
