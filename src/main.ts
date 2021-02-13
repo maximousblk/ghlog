@@ -21,6 +21,7 @@ export interface Config {
  */
 export const defaultConfig: Config = {
   categories: [
+    { name: "BREAKING", emoji: "💥", title: "Breaking Changes" },
     { name: "feat", emoji: "🚀", title: "New Features" },
     { name: "fix", emoji: "🐛", title: "Bug fixes" },
     { name: "docs", emoji: "📚", title: "Documentation" },
