@@ -180,7 +180,9 @@ export async function getCommits(
     ? await getTagCommit(owner, repo, baseRef)
     : await getOldestCommit(owner, repo);
 
-  const headCommit: string = head
+  const headCommit: string = head && isCommitHash(head)
+    ? head
+    : head
     ? await getTagCommit(owner, repo, head)
     : await getNewestCommit(owner, repo);
 
