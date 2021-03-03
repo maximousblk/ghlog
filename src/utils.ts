@@ -224,14 +224,16 @@ export async function getCommits(
     });
   }
 
+  const _base = {
+    sha: data.base_commit.sha,
+    url: data.base_commit.html_url,
+    message: data.base_commit.commit.message,
+    author: getCommitAuthor(data.base_commit),
+  };
+
   return {
-    base: {
-      sha: data.base_commit.sha,
-      url: data.base_commit.html_url,
-      message: data.base_commit.commit.message,
-      author: getCommitAuthor(data.base_commit),
-    },
-    head: commits[commits.length - 1],
+    base: _base,
+    head: commits[commits.length - 1] ?? _base,
     commits,
   };
 }
