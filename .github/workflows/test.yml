@@ -7,7 +7,7 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  test:
+  repo:
     name: deno ${{ matrix.deno }} / ${{ matrix.repo }}
 
     runs-on: ubuntu-20.04
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        deno: ['v1.x', 'nightly']
+        deno: ['v1', 'canary']
         repo: ['nestdotland/nest', 'denoland/deno', 'nodejs/node']
 
     steps:
@@ -24,9 +24,33 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Deno
-        uses: denolib/setup-deno@v2
+        uses: maximousblk/setup-deno@v1
         with:
           deno-version: ${{ matrix.deno }}
 
       - name: ${{ matrix.repo }}
         run: deno run -A ./ghlog.ts '${{ matrix.repo }}'
+
+  example:
+    name: deno ${{ matrix.deno }} / ${{ matrix.example }}
+
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        deno: ['v1', 'canary']
+        example: ['basic.ts', 'deno.ts', 'yargs.ts']
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v2
+
+      - name: Setup Deno
+        uses: maximousblk/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: ${{ matrix.repo }}
+        run: deno run -A ./examples/'${{ matrix.example }}'

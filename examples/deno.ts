@@ -1,7 +1,7 @@
 import { formatTime } from "../src/deps.ts";
 import { getChangeLog } from "../src/main.ts";
 
-const { changes } = await getChangeLog(
+const { changes, _meta } = await getChangeLog(
   "denoland/deno",
   undefined,
   undefined,
@@ -21,16 +21,15 @@ const { changes } = await getChangeLog(
 
 const commits = changes
   .map(({ commits }) => {
-    return commits
-      .map(({ header }) => `- ${header}`)
-      .join("\n");
+    return commits.map(({ header }) => `- ${header}`).join("\n");
   })
   .join("\n");
 
-const version = Deno.args[0];
+const version = Deno.args[0] ?? "CANARY";
+const commit = _meta.commits.head.shortSha.toUpperCase();
 const date = formatTime(new Date(), "yyyy.MM.dd");
 
-const changelog = `### ${version} / ${date}
+const changelog = `### ${version} / ${commit} (${date})
 
 ${commits}
 
