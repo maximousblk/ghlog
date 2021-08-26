@@ -5,7 +5,7 @@ import { Octokit, parseCommit, parseFlags } from "./deps.ts";
  * @returns GitHub API Auth Token
  */
 function getGitHubToken(): string | undefined {
-  return parseFlags(Deno.args).auth ?? Deno.env.get("GITHUB_TOKEN");
+  return parseFlags(Deno.args ?? []).auth ?? Deno.env.get("GITHUB_TOKEN");
 }
 
 /**
