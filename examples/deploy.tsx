@@ -87,14 +87,16 @@ const Changelog = ({
               {repo}@{meta.base}...{meta.head}
             </title>
           </Helmet>
-          <div class={tw`font-mono m-8`}>
-            <h1 class={tw`text-4xl text-gray-800 font-semibold`}>
-              ± {repo}@{meta.base}...{meta.head}
+          <div class={tw`font-mono p-12`}>
+            <h1 class={tw`text-5xl text-gray-800 font-semibold`}>
+              <span class={tw`select-none mr-2`}>±</span>
+              {repo}@{meta.base}...{meta.head}
             </h1>
-            <ul class={tw`text-lg text-gray-700 font-medium p-8`}>
+            <ul class={tw`text-lg text-gray-700 font-medium py-8`}>
               {commits.map(({ header, shortSha }) => (
                 <li>
-                  • [{shortSha.toUpperCase()}] {header}
+                  <span class={tw`select-none mr-2`}>•</span>
+                  [{shortSha.toUpperCase()}] {header}
                 </li>
               ))}
             </ul>
