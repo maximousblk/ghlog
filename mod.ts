@@ -34,6 +34,8 @@ export async function getDefaultChangelog(
     ? await getNewTag(_meta.repo.owner, _meta.repo.name, _meta.commits.groups)
     : undefined;
 
+  if (newTag) console.log(newTag);
+
   const stats = [
     `\`📆 ${release?.date ?? formatTime(new Date(), "dd.MM.yyyy")}\``,
     `\`🏷️ ${release?.tag ?? newTag ?? "UNRELEASED"}\``,
