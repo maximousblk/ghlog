@@ -4,6 +4,7 @@ export type { Config } from "./src/main.ts";
 import { getChangeLog } from "./src/main.ts";
 import type { Config } from "./src/main.ts";
 import { formatTime } from "./src/deps.ts";
+import { getNewTag } from "./src/utils.ts";
 
 export async function getDefaultChangelog(
   repo: {
@@ -12,7 +13,7 @@ export async function getDefaultChangelog(
     head?: string;
   },
   release?: {
-    tag?: string;
+    tag?: string | null;
     name?: string;
     date?: string;
   },
@@ -29,9 +30,13 @@ export async function getDefaultChangelog(
 
   const counts = changes.map(({ emoji, count }) => `\`${emoji} ${count}\``);
 
+  const newTag = release?.tag === null
+    ? await getNewTag(_meta.repo.owner, _meta.repo.name, _meta.commits.groups)
+    : undefined;
+
   const stats = [
     `\`📆 ${release?.date ?? formatTime(new Date(), "dd.MM.yyyy")}\``,
-    `\`🏷️ ${release?.tag ?? "UNRELEASED"}\``,
+    `\`🏷️ ${release?.tag ?? newTag ?? "UNRELEASED"}\``,
     `\`💾 ${_meta.commits.head.shortSha.toUpperCase()}\``,
     `${counts.join(" ")}`,
     `\`👥 ${_meta.contributors.length}\``,

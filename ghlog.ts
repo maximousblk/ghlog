@@ -18,6 +18,7 @@ Options:
   -h, --help                - this help menu
   -o, --output   <path>     - location of changelog output (default: CHANGELOG.md)
   -v, --version  <version>  - release tag
+  -s, --semver              - automatically determine a relase tag based on semantic versioning
   -n, --name     <name>     - release name
   -d, --date     <date>     - release date
   -a, --append              - append to existing changelog
@@ -29,9 +30,10 @@ Options:
 const repo = String(args._[0]);
 const base = args._[1] ? String(args._[1]) : undefined;
 const head = args._[2] ? String(args._[2]) : undefined;
+const semver = (args.s || args.semver) ? null : undefined;
 
 const output: string = args.o ?? args.output ?? "CHANGELOG.md";
-const tag: string = args.v ?? args.version;
+const tag: string = args.v ?? args.version ?? semver;
 const name: string = args.n ?? args.name;
 const date: string = args.d ?? args.date;
 const append: boolean = args.a ?? args.append;

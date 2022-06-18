@@ -40,6 +40,7 @@ ghlog <owner/repo> [ ...arguments ] [ ...options ]
 | `-h, --help`    |                | show help                                |
 | `-o, --output`  | `CHANGELOG.md` | location to release notes output         |
 | `-v, --version` | `UNRELEASED`   | tag to use in release notes              |
+| `-s, --semver`  |                | use the next semver for a new tag        |
 | `-d, --date`    | current date   | release date                             |
 | `-n, --name`    |                | name to use in release notes             |
 | `-a, --append`  |                | append to existing changelog             |

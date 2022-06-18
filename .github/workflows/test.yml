@@ -7,6 +7,29 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
+  unit:
+    name: deno ${{ matrix.deno }} / unit tests
+
+    runs-on: ubuntu-20.04
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        deno: ['v1', 'canary']
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v2
+
+      - name: Setup Deno
+        uses: maximousblk/setup-deno@v1
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Unit tests
+        run: deno test -A
+
   repo:
     name: deno ${{ matrix.deno }} / ${{ matrix.repo }}
 
