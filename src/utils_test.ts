@@ -1,5 +1,9 @@
 import { parseSemver } from "./utils.ts";
-import { assert, assertEquals, assertFalse } from "https://deno.land/std@0.144.0/testing/asserts.ts";
+import {
+  assert,
+  assertEquals,
+  assertFalse,
+} from "https://deno.land/std@0.144.0/testing/asserts.ts";
 
 Deno.test('parseSemver("v1.2.3")', () => {
   const semver = parseSemver("v1.2.3");

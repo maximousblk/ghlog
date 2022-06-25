@@ -297,7 +297,7 @@ export function groupCommits(commits: Commit[], filters: string[]) {
 export async function getNewTag(
   owner: string,
   repo: string,
-  groups: Record<string, Commit[]>
+  groups: Record<string, Commit[]>,
 ): Promise<string | undefined> {
   const baseTag = await getLatestTag(owner, repo) ?? "v0.0.0";
 
@@ -307,30 +307,30 @@ export async function getNewTag(
 
   const { prefix, major, minor, patch } = semver;
 
-  const keys = Object.keys(groups).filter(key => groups[key].length);
+  const keys = Object.keys(groups).filter((key) => groups[key].length);
 
   if (keys.includes("BREAKING")) {
     if (major > 0) return `${prefix}${major + 1}.0.0`;
     else return `${prefix}${major}.${minor + 1}.0`;
   }
-  if (keys.includes("feat")) return `${prefix}${major}.${minor+1}.0`;
-  if (keys.includes("fix")) return `${prefix}${major}.${minor}.${patch+1}`;
+  if (keys.includes("feat")) return `${prefix}${major}.${minor + 1}.0`;
+  if (keys.includes("fix")) return `${prefix}${major}.${minor}.${patch + 1}`;
 
   return "UNRELEASED";
 }
 
 export function parseSemver(tag: string): {
-  prefix: "v" | "",
-  major: number,
-  minor: number,
-  patch: number,
+  prefix: "v" | "";
+  major: number;
+  minor: number;
+  patch: number;
 } | undefined {
   const matched = tag.match(/^(v?)(\d+)\.(\d+)\.(\d+)$/);
 
   if (!matched || matched.length !== 5) return undefined;
   if (matched[1] !== "v" && matched[1] !== "") return undefined;
 
-  return { 
+  return {
     prefix: matched[1],
     major: parseInt(matched[2]),
     minor: parseInt(matched[3]),
