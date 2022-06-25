@@ -49,6 +49,23 @@ ghlog <owner/repo> [ ...arguments ] [ ...options ]
 You can also use the `GITHUB_TOKEN` environment variable to use the GitHub
 access token.
 
+##### Specification of -s, --semver
+
+- When commits includes "BREAKING", increase
+  - the major version if the last tag >= v1.0.0 (e.g. v1.2.3 -> v2.0.0)
+  - the minor version if the last tag < v1.0.0 (e.g. v0.1.2 -> v0.2.0)
+- When commits includes "feat", increase the minor version
+- When commits includes "fix", increase the patch version (e.g. v1.2.3 ->
+  v1.2.4)
+- Otherwise, the new tag will be "UNRELEASED"
+
+The ghlog command returns the new tag:
+
+```sh
+$ ghlog maximousblk/ghlog -s
+v0.3.4
+```
+
 ## Templates
 
 `ghlog` provides a sane default template out of the box that works great in most
