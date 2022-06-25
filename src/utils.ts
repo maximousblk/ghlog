@@ -309,7 +309,10 @@ export async function getNewTag(
 
   const keys = Object.keys(groups).filter(key => groups[key].length);
 
-  if (keys.includes("BREAKING")) return `${prefix}${major+1}.0.0`;
+  if (keys.includes("BREAKING")) {
+    if (major > 0) return `${prefix}${major + 1}.0.0`;
+    else return `${prefix}${major}.${minor + 1}.0`;
+  }
   if (keys.includes("feat")) return `${prefix}${major}.${minor+1}.0`;
   if (keys.includes("fix")) return `${prefix}${major}.${minor}.${patch+1}`;
 
